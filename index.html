@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GXMN OS V17</title>
+    <style>
+        :root { --bg: #0f0f0f; --card: #1a1a1a; --accent: #2979ff; --text: #ffffff; --text-dim: #b0b0b0; --danger: #ff5252; --online: #4caf50; --stock: #ffd700; }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        input, textarea { width: 100%; background: #262626; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-sizing: border-box; outline: none; }
+        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
+        header { background: rgba(26,26,26,0.8); backdrop-filter: blur(10px); padding: 15px 20px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+        main { flex: 1; overflow-y: auto; padding: 15px; display: none; }
+        .tab-content { display: none; } .tab-content.active { display: block; }
+        .card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #222; }
+        .bottom-nav { background: var(--card); display: flex; height: 65px; border-top: 1px solid #222; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; }
+        .nav-item.active { color: var(--accent); }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .info-card { background: #222; padding: 12px; border-radius: 12px; border: 1px solid #333; font-size: 0.75rem; }
+        .info-val { color: var(--accent); font-weight: bold; font-size: 0.9rem; margin-top: 4px; }
+        .room-item { background: #222; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #333; }
+        .room-item.active-room { border: 1.5px solid var(--accent); background: rgba(41,121,255,0.1); }
+        #chat-messages { height: calc(100vh - 380px); overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+        .msg { padding: 10px 14px; border-radius: 15px; max-width: 85%; font-size: 0.9rem; position: relative; line-height: 1.4; word-break: break-all; }
+        .msg.me { align-self: flex-end; background: var(--accent); }
+        .msg.other { align-self: flex-start; background: #333; }
+        .msg-user { font-size: 0.65rem; opacity: 0.7; margin-bottom: 3px; font-weight: bold; }
+        .popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #222; padding: 20px; border-radius: 20px; border: 2px solid #444; z-index: 3000; display: none; width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2999; display: none; }
+        .c-btn { background: #333; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 1rem; }
+        .shortcut-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .shortcut-btn { background: #222; padding: 14px 10px; border-radius: 12px; border: 1px solid #333; text-align: center; cursor: pointer; font-size: 0.75rem; }
+        .shortcut-btn:active { background: rgba(41,121,255,0.2); }
+        .quote-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2979ff44; border-radius: 15px; padding: 18px; margin-bottom: 12px; }
+        .admin-section { background: #1a0000; border: 1px solid var(--danger); border-radius: 15px; padding: 15px; margin-bottom: 12px; }
+        .feed-post { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #222; }
+        .feed-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .feed-actions button { padding: 6px 12px; font-size: 0.7rem; border-radius: 8px; width: auto; }
+        .comment-box { background: #222; border-radius: 10px; padding: 10px; margin-top: 8px; font-size: 0.8rem; }
+        .like-btn { background: #333; }
+        .like-btn.liked { background: var(--danger); }
+        .profile-avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold; margin: 0 auto 10px; }
+        .stat-row { display: flex; justify-content: space-around; text-align: center; margin: 15px 0; }
+        .stat-row div { font-size: 0.75rem; color: var(--text-dim); }
+        .stat-row b { display: block; font-size: 1.1rem; color: var(--text); }
+        .badge { display: inline-block; font-size: 0.6rem; padding: 2px 6px; border-radius: 5px; margin-left: 5px; font-weight: bold; }
+        .badge-private { background: var(--danger); }
+        .badge-open { background: var(--online); }
+        .section-title { font-size: 0.7rem; color: var(--text-dim); margin: 15px 5px 5px 5px; }
+        .create-room-toggle { background: linear-gradient(135deg, #1a2a1a, #0d1a0d); border: 1px solid var(--online); border-radius: 15px; padding: 15px; margin-bottom: 12px; }
+        .tab-seg { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-seg button { padding: 8px; font-size: 0.75rem; flex: 1; border-radius: 8px; }
+        .tab-seg button.active { background: var(--accent); }
+        .tab-seg button:not(.active) { background: #333; }
+        .stock-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 8px 10px; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a; }
+        .stock-price { color: var(--stock); font-weight: bold; }
+        .stock-change.up { color: var(--online); font-size: 0.7rem; }
+        .stock-change.down { color: var(--danger); font-size: 0.7rem; }
+        .admin-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; }
+        .admin-stat-card { background: #2a0000; border: 1px solid #440000; border-radius: 10px; padding: 12px; text-align: center; }
+        .admin-stat-card b { display: block; font-size: 1.5rem; color: var(--danger); }
+        .admin-stat-card span { font-size: 0.65rem; color: var(--text-dim); }
+        .admin-tab-bar { display: flex; gap: 5px; margin-bottom: 15px; overflow-x: auto; }
+        .admin-tab-bar button { padding: 6px 12px; font-size: 0.7rem; border-radius: 8px; white-space: nowrap; width: auto; flex-shrink: 0; }
+        .admin-tab-bar button.active { background: var(--danger); }
+        .admin-tab-bar button:not(.active) { background: #333; }
+        .admin-section-content { display: none; }
+        .admin-section-content.active { display: block; }
+        .logout-btn { background: #333; color: var(--danger); border: 1px solid var(--danger); padding: 8px 16px; border-radius: 8px; width: auto; font-size: 0.75rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="overlay" class="overlay" onclick="closeAllPopups()"></div>
+
+<div id="login-screen" style="position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:4000; padding:20px;">
+    <div style="margin-bottom:10px; font-size:2.5rem;">🖥️</div>
+    <h1 style="color:var(--accent); font-weight:900; margin-bottom:5px;">GXMN OS v17</h1>
+    <p style="color:var(--text-dim); font-size:0.75rem; margin-bottom:30px;">ULTIMATE EDITION</p>
+    <input type="text" id="login-name" placeholder="닉네임">
+    <input type="password" id="login-pw" placeholder="비밀번호">
+    <button onclick="doLogin()">시스템 접속</button>
+    <p style="font-size:0.7rem; color:var(--text-dim); margin-top:15px;">계정이 없으면 닉네임+비밀번호 입력 후 접속 (자동 가입)</p>
+</div>
+
+<header>
+    <div id="header-time" style="font-size:0.8rem; font-weight:bold;">00:00:00</div>
+    <div id="user-display" style="font-size:0.8rem; color:var(--accent); font-weight:bold;"></div>
+    <button class="logout-btn" id="logout-btn" style="display:none;" onclick="doLogout()">🚪 로그아웃</button>
+</header>
+
+<main id="main-ui">
+
+    <!-- 홈 탭 -->
+    <div id="tab-home" class="tab-content active">
+        <div class="quote-card">
+            <div style="font-size:0.65rem; color:#2979ff; margin-bottom:6px;">💡 오늘의 명언</div>
+            <div id="quote-text" style="font-size:0.85rem; line-height:1.6; color:#e0e0e0; font-style:italic;">"로딩 중..."</div>
+            <div id="quote-author" style="font-size:0.7rem; color:#888; margin-top:8px; text-align:right;"></div>
+            <button onclick="newQuote()" style="margin-top:10px; background:transparent; border:1px solid #2979ff44; color:var(--accent); padding:6px; font-size:0.7rem; width:100%;">다른 명언 보기 🔄</button>
+        </div>
+
+        <div class="card">
+            <b>⚡ 바로가기</b>
+            <div class="shortcut-grid" style="margin-top:10px;">
+                <div class="shortcut-btn" onclick="tab('feed', document.querySelectorAll('.nav-item')[1])">🖼️ 피드</div>
+                <div class="shortcut-btn" onclick="tab('chat', document.querySelectorAll('.nav-item')[2])">💬 채팅</div>
+                <div class="shortcut-btn" onclick="tab('mypage', document.querySelectorAll('.nav-item')[3])">👤 내 페이지</div>
+                <div class="shortcut-btn" onclick="openPopup('calc-popup')">🧮 계산기</div>
+                <div class="shortcut-btn" onclick="openPopup('stopwatch-popup')">⏱️ 스톱워치</div>
+                <div class="shortcut-btn" onclick="openPopup('timer-popup')">⏳ 타이머</div>
+                <div class="shortcut-btn" onclick="tab('chat', document.querySelectorAll('.nav-item')[2]); setTimeout(enterAI,300)">🤖 AI 채팅</div>
+                <div class="shortcut-btn" onclick="scrollToWeather()">🌤️ 날씨</div>
+                <div class="shortcut-btn" onclick="scrollToDday()">🗓️ D-Day</div>
+            </div>
+        </div>
+
+        <div class="card" style="padding:10px;" id="weather-section">
+            <div style="display:flex; gap:5px; align-items:center;">
+                <input type="text" id="loc-in" placeholder="도시명 (예: Seoul, Daegu)" style="margin:0; font-size:0.75rem; flex:1; padding:8px;">
+                <button onclick="saveLocation()" style="width:70px; font-size:0.75rem;">등록</button>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <b>🌤️ <span id="loc-name-display">위치 미정</span> 날씨</b>
+                <div id="weather-view" class="info-val">등록 필요</div>
+            </div>
+            <div class="info-card">
+                <b>💵 USD 환율</b>
+                <div id="ex-view" class="info-val">로딩 중...</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <b style="color:var(--stock);">📈 관심 종목 (실시간)</b>
+            <div id="stock-list" style="margin:10px 0; font-size:0.8rem; min-height:20px;"></div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="stock-in" placeholder="종목코드 (예: AAPL, TSLA)" style="margin:0; font-size:0.75rem;">
+                <button onclick="addStock()" style="width:50px; font-size:0.75rem;">등록</button>
+            </div>
+        </div>
+
+        <div class="card" id="dday-section">
+            <b>🗓️ D-Day 설정</b>
+            <div id="dday-view" style="color:var(--accent); font-weight:bold; font-size:1.2rem; margin:10px 0;">날짜를 선택하세요</div>
+            <input type="date" id="dday-in" onchange="saveDDay()" style="font-size:0.8rem;">
+        </div>
+
+        <div class="card">
+            <b>✅ 할 일 & 📝 메모</b>
+            <div id="todo-box" style="margin:10px 0; font-size:0.8rem;"></div>
+            <div style="display:flex; gap:5px;"><input type="text" id="todo-in" style="margin:0;"><button onclick="addTodo()" style="width:40px;">+</button></div>
+            <textarea id="memo-in" oninput="saveMemo()" style="margin-top:10px;" rows="3" placeholder="내용 입력..."></textarea>
+        </div>
+    </div>
+
+    <!-- 피드 탭 -->
+    <div id="tab-feed" class="tab-content">
+        <div class="card">
+            <b>✍️ 새 피드 작성</b>
+            <textarea id="blog-in" placeholder="무슨 일이 일어나고 있나요?" style="margin-top:10px;"></textarea>
+            <input type="file" id="blog-img" accept="image/*">
+            <button onclick="postBlog()" style="margin-top:10px;">게시하기</button>
+        </div>
+        <div id="blog-feed"></div>
+    </div>
+
+    <!-- 채팅 탭 -->
+    <div id="tab-chat" class="tab-content">
+        <div id="chat-list-view">
+            <!-- AI 채팅 -->
+            <div class="card" onclick="enterAI()" style="cursor:pointer; border:1px solid var(--accent); background:rgba(41,121,255,0.1);">🤖 <b>AI Assistant (사진 분석)</b></div>
+
+            <!-- 채팅방 만들기 -->
+            <div class="create-room-toggle">
+                <b style="color:var(--online);">➕ 채팅방 만들기</b>
+                <div class="tab-seg" style="margin-top:10px;">
+                    <button id="room-type-open" class="active" onclick="setRoomType('open')">🌐 오픈채팅</button>
+                    <button id="room-type-private" onclick="setRoomType('private')">🔐 프라이빗</button>
+                </div>
+                <input type="text" id="new-room-name" placeholder="채팅방 이름" style="margin-bottom:8px;">
+                <div id="private-code-wrap" style="display:none;">
+                    <input type="text" id="new-room-code" placeholder="참여 코드 (숫자/영문)" style="margin-bottom:8px;">
+                </div>
+                <button onclick="createRoom()" style="background:var(--online); font-size:0.85rem;">채팅방 생성</button>
+            </div>
+
+            <!-- 프라이빗 입장 -->
+            <div class="card" style="border:1px solid var(--danger);">
+                <b>🔐 프라이빗 채팅 입장</b>
+                <div style="display:flex; gap:5px; margin-top:10px;"><input type="text" id="join-code-in" style="margin:0;" placeholder="참여 코드"><button onclick="checkPrivateCode()" style="width:60px; background:var(--danger);">입장</button></div>
+            </div>
+
+            <p class="section-title">최근 참여한 방</p>
+            <div id="joined-rooms"></div>
+            <p class="section-title">공개 채팅방</p>
+            <div id="room-container"></div>
+        </div>
+
+        <div id="chat-room-view" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <button onclick="exitRoom()" style="width:60px; background:#333; font-size:0.7rem;">나가기</button>
+                <b id="active-room-name" style="color:var(--accent); font-size:0.85rem; text-align:center; flex:1; padding:0 10px;"></b>
+                <div style="width:60px;"></div>
+            </div>
+            <div id="chat-messages"></div>
+            <div style="background:#1a1a1a; padding:10px; border-radius:15px; border:1px solid #333;">
+                <input type="file" id="chat-img" accept="image/*" style="font-size:0.6rem; color:var(--text-dim); margin-bottom:8px;">
+                <div style="display:flex; gap:5px;"><input type="text" id="chat-in" style="margin:0;" onkeypress="if(event.keyCode==13) sendMsg()"><button onclick="sendMsg()" style="width:60px;">전송</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 내 페이지 탭 -->
+    <div id="tab-mypage" class="tab-content">
+        <div class="card" id="mypage-content"></div>
+        <div class="card">
+            <b>📝 내 게시물</b>
+            <div id="my-posts"></div>
+        </div>
+    </div>
+
+    <!-- 어드민 탭 -->
+    <div id="tab-admin" class="tab-content">
+        <div class="admin-section">
+            <b style="color:var(--danger);">🔴 ADMIN PANEL v2</b>
+
+            <!-- 통계 -->
+            <div class="admin-stat-grid" style="margin-top:12px;">
+                <div class="admin-stat-card"><b id="stat-users">0</b><span>사용자</span></div>
+                <div class="admin-stat-card"><b id="stat-posts">0</b><span>게시물</span></div>
+                <div class="admin-stat-card"><b id="stat-rooms">0</b><span>채팅방</span></div>
+            </div>
+
+            <!-- 탭 바 -->
+            <div class="admin-tab-bar">
+                <button class="active" onclick="adminTab('users', this)">👥 사용자</button>
+                <button onclick="adminTab('posts', this)">📝 피드</button>
+                <button onclick="adminTab('rooms', this)">💬 채팅방</button>
+                <button onclick="adminTab('broadcast', this)">📢 공지</button>
+                <button onclick="adminTab('createroom', this)">🏠 방 관리</button>
+            </div>
+
+            <!-- 사용자 관리 -->
+            <div id="admin-sec-users" class="admin-section-content active">
+                <div style="display:flex; gap:5px; margin-bottom:10px;">
+                    <input type="text" id="admin-search-user" placeholder="닉네임 검색..." style="margin:0; font-size:0.8rem;" oninput="filterAdminUsers()">
+                </div>
+                <div id="admin-users"></div>
+            </div>
+
+            <!-- 피드 관리 -->
+            <div id="admin-sec-posts" class="admin-section-content">
+                <div id="admin-posts"></div>
+            </div>
+
+            <!-- 채팅방 관리 -->
+            <div id="admin-sec-rooms" class="admin-section-content">
+                <div id="admin-rooms"></div>
+            </div>
+
+            <!-- 공지 발송 -->
+            <div id="admin-sec-broadcast" class="admin-section-content">
+                <b style="font-size:0.85rem; color:var(--danger);">📢 전체 공지 발송</b>
+                <p style="font-size:0.7rem; color:var(--text-dim);">선택한 채팅방에 ADMIN 이름으로 메시지를 발송합니다.</p>
+                <select id="broadcast-room" style="background:#333; color:white; border:1px solid #444; border-radius:8px; padding:10px; width:100%; margin-bottom:10px;"></select>
+                <textarea id="broadcast-msg" placeholder="공지 내용 입력..." rows="3" style="margin-bottom:10px;"></textarea>
+                <button onclick="sendBroadcast()" style="background:var(--danger);">📢 공지 발송</button>
+            </div>
+
+            <!-- 방 직접 생성 (관리자) -->
+            <div id="admin-sec-createroom" class="admin-section-content">
+                <b style="font-size:0.85rem; color:var(--danger);">🏠 채팅방 직접 생성 / 삭제</b>
+                <div class="tab-seg" style="margin-top:10px;">
+                    <button id="admin-room-type-open" class="active" onclick="setAdminRoomType('open')">🌐 오픈</button>
+                    <button id="admin-room-type-private" onclick="setAdminRoomType('private')">🔐 프라이빗</button>
+                </div>
+                <input type="text" id="admin-new-room-name" placeholder="채팅방 이름" style="margin-bottom:8px;">
+                <div id="admin-private-code-wrap" style="display:none;">
+                    <input type="text" id="admin-new-room-code" placeholder="참여 코드" style="margin-bottom:8px;">
+                </div>
+                <button onclick="adminCreateRoom()" style="background:var(--danger); margin-bottom:15px;">채팅방 생성</button>
+                <b style="font-size:0.85rem;">모든 채팅방 삭제 목록</b>
+                <div id="admin-all-rooms-delete" style="margin-top:8px;"></div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<nav class="bottom-nav" id="bottom-nav">
+    <div class="nav-item active" onclick="tab('home', this)">🏠<br>홈</div>
+    <div class="nav-item" onclick="tab('feed', this)">🖼️<br>피드</div>
+    <div class="nav-item" onclick="tab('chat', this)">💬<br>채팅</div>
+    <div class="nav-item" onclick="tab('mypage', this)">👤<br>내 페이지</div>
+</nav>
+
+<!-- 계산기 팝업 -->
+<div id="calc-popup" class="popup">
+    <h3 style="margin-top:0;">🧮 계산기</h3>
+    <div id="calc-res" style="background:black; padding:15px; text-align:right; border-radius:10px; margin-bottom:10px; font-size:1.5rem; min-height:50px; word-break:break-all;">0</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px;">
+        <div class="c-btn" onclick="cIn('7')">7</div><div class="c-btn" onclick="cIn('8')">8</div><div class="c-btn" onclick="cIn('9')">9</div><div class="c-btn" onclick="cIn('/')" style="color:var(--accent);">÷</div>
+        <div class="c-btn" onclick="cIn('4')">4</div><div class="c-btn" onclick="cIn('5')">5</div><div class="c-btn" onclick="cIn('6')">6</div><div class="c-btn" onclick="cIn('*')" style="color:var(--accent);">×</div>
+        <div class="c-btn" onclick="cIn('1')">1</div><div class="c-btn" onclick="cIn('2')">2</div><div class="c-btn" onclick="cIn('3')">3</div><div class="c-btn" onclick="cIn('-')" style="color:var(--accent);">−</div>
+        <div class="c-btn" onclick="cIn('0')">0</div><div class="c-btn" onclick="cClr()" style="color:var(--danger);">C</div><div class="c-btn" onclick="cCalc()" style="background:var(--accent);">=</div><div class="c-btn" onclick="cIn('+')" style="color:var(--accent);">+</div>
+    </div>
+    <button onclick="closePopup('calc-popup')" style="margin-top:10px; background:#444;">닫기</button>
+</div>
+
+<!-- 스톱워치 팝업 -->
+<div id="stopwatch-popup" class="popup">
+    <h2 style="text-align:center; margin-top:0;">⏱️ 스톱워치</h2>
+    <div id="sw-display" style="font-size:2.5rem; text-align:center; margin:20px 0; font-variant-numeric:tabular-nums;">00:00.00</div>
+    <div style="display:flex; gap:10px;">
+        <button onclick="startSW()">시작</button>
+        <button onclick="stopSW()" style="background:var(--danger);">정지</button>
+        <button onclick="resetSW()" style="background:#555;">리셋</button>
+    </div>
+    <button onclick="closePopup('stopwatch-popup')" style="margin-top:15px; background:transparent; color:var(--text-dim);">닫기</button>
+</div>
+
+<!-- 타이머 팝업 -->
+<div id="timer-popup" class="popup">
+    <h2 style="text-align:center; margin-top:0;">⏳ 타이머</h2>
+    <input type="number" id="timer-in" placeholder="초 입력 (예: 60)" style="text-align:center; font-size:1.2rem;">
+    <div id="timer-display" style="font-size:2.5rem; text-align:center; margin:10px 0;">00:00</div>
+    <div style="display:flex; gap:10px;">
+        <button onclick="startTimer()">시작</button>
+        <button onclick="resetTimer()" style="background:#555;">리셋</button>
+    </div>
+    <button onclick="closePopup('timer-popup')" style="margin-top:15px; background:transparent; color:var(--text-dim);">닫기</button>
+</div>
+
+<!-- 사용자 수정 팝업 (ADMIN) -->
+<div id="edit-user-popup" class="popup">
+    <h3 style="margin-top:0; color:var(--danger);">✏️ 사용자 정보 수정</h3>
+    <input type="text" id="edit-user-id" placeholder="유저 ID (변경불가)" readonly style="color:#888;">
+    <input type="text" id="edit-user-pw" placeholder="새 비밀번호">
+    <input type="text" id="edit-user-bio" placeholder="새 소개">
+    <button onclick="saveEditUser()">저장</button>
+    <button onclick="closePopup('edit-user-popup')" style="background:#444; margin-top:5px;">취소</button>
+</div>
+
+<!-- 비밀번호 변경 팝업 -->
+<div id="change-pw-popup" class="popup">
+    <h3 style="margin-top:0; color:var(--accent);">🔑 비밀번호 변경</h3>
+    <input type="password" id="cur-pw-in" placeholder="현재 비밀번호">
+    <input type="password" id="new-pw-in" placeholder="새 비밀번호">
+    <input type="password" id="new-pw-confirm" placeholder="새 비밀번호 확인">
+    <button onclick="changePassword()">변경하기</button>
+    <button onclick="closePopup('change-pw-popup')" style="background:#444; margin-top:5px;">취소</button>
+</div>
+
+<script>
+const DB = "https://blog-4acc0-default-rtdb.firebaseio.com/";
+const AI_KEY = "AIzaSyBtWf-mEWI3SO-OhvHYTsdKYOe4QFuKg60";
+const W_KEY = "bd5e378503939ddaee76f12ad7a97608";
+let me = {}, curRoom = null, isAI = false, chatInt, joinedRooms = [];
+let newRoomType = 'open', adminRoomType = 'open';
+let allAdminUsersData = {};
+
+const QUOTES = [
+    { text: "성공은 최종 목표가 아니고, 실패는 치명적이지 않다. 중요한 건 계속하려는 용기다.", author: "— Winston Churchill" },
+    { text: "당신이 할 수 있다고 생각하든, 할 수 없다고 생각하든, 당신 말이 맞다.", author: "— Henry Ford" },
+    { text: "천 리 길도 한 걸음부터.", author: "— 노자" },
+    { text: "인생은 자전거를 타는 것과 같다. 균형을 잡으려면 계속 움직여야 한다.", author: "— Albert Einstein" },
+    { text: "지금 힘들다면, 당신이 뭔가를 위해 싸우고 있다는 증거다.", author: "— 익명" },
+    { text: "오늘 할 수 있는 일을 내일로 미루지 마라.", author: "— Benjamin Franklin" },
+    { text: "실패는 성공의 어머니다.", author: "— 토머스 에디슨" },
+    { text: "가장 어두운 밤도 끝나고, 태양은 반드시 뜬다.", author: "— Victor Hugo" },
+    { text: "남들과 비교하지 마라. 어제의 너와 비교하라.", author: "— 익명" },
+    { text: "꿈을 꿀 수 있다면, 이룰 수도 있다.", author: "— Walt Disney" },
+    { text: "노력은 배신하지 않는다.", author: "— 익명" },
+    { text: "지식은 힘이다.", author: "— Francis Bacon" },
+    { text: "시작이 반이다.", author: "— 아리스토텔레스" },
+    { text: "포기하지 않는 한, 실패는 없다.", author: "— 익명" },
+    { text: "미래를 예측하는 가장 좋은 방법은 미래를 직접 만드는 것이다.", author: "— Peter Drucker" },
+];
+
+let lastQuoteIdx = -1;
+function newQuote() {
+    let idx;
+    do { idx = Math.floor(Math.random() * QUOTES.length); } while(idx === lastQuoteIdx);
+    lastQuoteIdx = idx;
+    document.getElementById('quote-text').innerText = '"' + QUOTES[idx].text + '"';
+    document.getElementById('quote-author').innerText = QUOTES[idx].author;
+}
+
+/* ==================== 로그인 / 로그아웃 ==================== */
+async function doLogin() {
+    const n = document.getElementById('login-name').value.trim();
+    const p = document.getElementById('login-pw').value.trim();
+    if(!n || !p) return alert("닉네임과 비밀번호를 입력하세요.");
+    const res = await fetch(`${DB}accounts/${n}.json`);
+    const acc = await res.json();
+    if(!acc) {
+        await fetch(`${DB}accounts/${n}.json`, { method:'PUT', body: JSON.stringify({ pw: p, bio: "", joinedAt: Date.now() }) });
+        me = { id: n, pw: p, bio: "", joinedAt: Date.now() };
+    } else if(acc.pw !== p) {
+        return alert("비밀번호가 일치하지 않습니다.");
+    } else {
+        me = { id: n, ...acc };
+    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-ui').style.display = 'block';
+    document.getElementById('logout-btn').style.display = 'block';
+    document.getElementById('user-display').innerText = n + "님" + (n === "ADMIN" ? " 👑" : "");
+
+    // 어드민 탭 추가
+    if(n === "ADMIN") {
+        const existing = document.getElementById('admin-nav-btn');
+        if(!existing) {
+            const adminNav = document.createElement('div');
+            adminNav.className = 'nav-item';
+            adminNav.id = 'admin-nav-btn';
+            adminNav.innerHTML = '👑<br>어드민';
+            adminNav.onclick = function() { tab('admin', this); loadAdminData(); };
+            document.getElementById('bottom-nav').appendChild(adminNav);
+        }
+    }
+    init();
+}
+
+function doLogout() {
+    if(!confirm("로그아웃 하시겠습니까?")) return;
+    clearInterval(chatInt);
+    me = {}; curRoom = null; isAI = false; joinedRooms = [];
+    document.getElementById('main-ui').style.display = 'none';
+    document.getElementById('logout-btn').style.display = 'none';
+    document.getElementById('user-display').innerText = '';
+    document.getElementById('login-name').value = '';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-screen').style.display = 'flex';
+    // 어드민 탭 제거
+    const adminBtn = document.getElementById('admin-nav-btn');
+    if(adminBtn) adminBtn.remove();
+    // 홈으로 초기화
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-home').classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    document.querySelector('.nav-item').classList.add('active');
+}
+
+/* ==================== 탭 ==================== */
+function tab(t, el) {
+    document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-' + t).classList.add('active');
+    if(el) el.classList.add('active');
+    if(t === 'chat') { loadRooms(); exitRoom(); }
+    if(t === 'feed') loadBlog();
+    if(t === 'home') updateExtraInfo();
+    if(t === 'mypage') loadMyPage();
+    if(t === 'admin') loadAdminData();
+}
+
+/* ==================== 어드민 탭 전환 ==================== */
+function adminTab(name, el) {
+    document.querySelectorAll('.admin-section-content').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-bar button').forEach(x => x.classList.remove('active'));
+    document.getElementById('admin-sec-' + name).classList.add('active');
+    el.classList.add('active');
+    if(name === 'broadcast') loadBroadcastRooms();
+    if(name === 'createroom') loadAdminAllRoomsDelete();
+}
+
+/* ==================== 스크롤 ==================== */
+function scrollToWeather() { document.getElementById('weather-section').scrollIntoView({behavior:'smooth'}); }
+function scrollToDday() { document.getElementById('dday-section').scrollIntoView({behavior:'smooth'}); }
+
+/* ==================== 위치 / 날씨 / 환율 ==================== */
+function saveLocation() {
+    const loc = document.getElementById('loc-in').value;
+    if(!loc) return;
+    localStorage.setItem(`location_${me.id}`, loc);
+    updateExtraInfo();
+}
+
+async function updateExtraInfo() {
+    const savedLoc = localStorage.getItem(`location_${me.id}`);
+    if(savedLoc) {
+        document.getElementById('loc-name-display').innerText = savedLoc;
+        try {
+            const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${savedLoc}&appid=${W_KEY}&units=metric&lang=kr`);
+            const data = await res.json();
+            document.getElementById('weather-view').innerText = data.cod === 200 ? `${data.weather[0].description} / ${Math.round(data.main.temp)}°C` : "도시 정보 없음";
+        } catch(e) { document.getElementById('weather-view').innerText = "오류"; }
+    }
+    try {
+        const exRes = await fetch("https://open.er-api.com/v6/latest/USD");
+        const exData = await exRes.json();
+        document.getElementById('ex-view').innerText = `1$ = ${exData.rates.KRW.toLocaleString()}원`;
+    } catch(e) { document.getElementById('ex-view').innerText = "오류"; }
+    loadStocks();
+}
+
+/* ==================== 주식 (원 단위) ==================== */
+function addStock() {
+    const s = document.getElementById('stock-in').value.toUpperCase(); if(!s) return;
+    const list = JSON.parse(localStorage.getItem(`stocks_${me.id}`) || "[]");
+    if(!list.includes(s)) list.push(s);
+    localStorage.setItem(`stocks_${me.id}`, JSON.stringify(list));
+    document.getElementById('stock-in').value = ""; loadStocks();
+}
+
+async function loadStocks() {
+    const list = JSON.parse(localStorage.getItem(`stocks_${me.id}`) || "[]");
+    const box = document.getElementById('stock-list'); box.innerHTML = "";
+    if(list.length === 0) { box.innerHTML = '<p style="color:var(--text-dim); font-size:0.75rem; margin:0;">등록된 종목 없음</p>'; return; }
+
+    // 환율 가져오기 (USD → KRW)
+    let krwRate = 1380; // 기본값
+    try {
+        const exRes = await fetch("https://open.er-api.com/v6/latest/USD");
+        const exData = await exRes.json();
+        if(exData.rates && exData.rates.KRW) krwRate = exData.rates.KRW;
+    } catch(e) {}
+
+    for(let s of list) {
+        // 시뮬레이션 가격 (실제 API 없이 종목별 고정 시드값 기반 랜덤)
+        const seed = s.split('').reduce((a,b) => a + b.charCodeAt(0), 0);
+        const baseUSD = (seed % 900 + 50);
+        const fluctuation = (Math.sin(Date.now() / 10000 + seed) * 0.02);
+        const priceUSD = baseUSD * (1 + fluctuation);
+        const priceKRW = Math.round(priceUSD * krwRate);
+        const change = fluctuation * 100;
+        const changeClass = change >= 0 ? 'up' : 'down';
+        const changeSign = change >= 0 ? '+' : '';
+
+        box.innerHTML += `<div class="stock-item">
+            <div>
+                <b style="font-size:0.9rem;">${s}</b>
+                <span class="stock-change ${changeClass}" style="margin-left:8px;">${changeSign}${change.toFixed(2)}%</span>
+            </div>
+            <div style="text-align:right;">
+                <div class="stock-price">${priceKRW.toLocaleString()}원</div>
+                <div style="font-size:0.65rem; color:var(--text-dim);">$${priceUSD.toFixed(2)}</div>
+            </div>
+            <small onclick="delStock('${s}')" style="color:var(--danger); margin-left:10px; cursor:pointer; font-size:1rem;">×</small>
+        </div>`;
+    }
+}
+
+function delStock(s) {
+    let list = JSON.parse(localStorage.getItem(`stocks_${me.id}`) || "[]");
+    list = list.filter(item => item !== s);
+    localStorage.setItem(`stocks_${me.id}`, JSON.stringify(list)); loadStocks();
+}
+
+/* ==================== 채팅방 만들기 ==================== */
+function setRoomType(type) {
+    newRoomType = type;
+    document.getElementById('room-type-open').classList.toggle('active', type === 'open');
+    document.getElementById('room-type-private').classList.toggle('active', type === 'private');
+    document.getElementById('private-code-wrap').style.display = type === 'private' ? 'block' : 'none';
+}
+
+function setAdminRoomType(type) {
+    adminRoomType = type;
+    document.getElementById('admin-room-type-open').classList.toggle('active', type === 'open');
+    document.getElementById('admin-room-type-private').classList.toggle('active', type === 'private');
+    document.getElementById('admin-private-code-wrap').style.display = type === 'private' ? 'block' : 'none';
+}
+
+async function createRoom() {
+    const name = document.getElementById('new-room-name').value.trim();
+    if(!name) return alert("채팅방 이름을 입력하세요.");
+    const code = newRoomType === 'private' ? document.getElementById('new-room-code').value.trim() : null;
+    if(newRoomType === 'private' && !code) return alert("프라이빗 방은 참여 코드를 입력하세요.");
+
+    const roomData = { name, type: newRoomType, createdBy: me.id, createdAt: Date.now() };
+    if(code) roomData.code = code;
+
+    await fetch(`${DB}rooms.json`, { method:'POST', body: JSON.stringify(roomData) });
+    document.getElementById('new-room-name').value = '';
+    document.getElementById('new-room-code').value = '';
+    alert(`"${name}" 채팅방이 생성되었습니다!${code ? '\n참여 코드: ' + code : ''}`);
+    loadRooms();
+}
+
+async function adminCreateRoom() {
+    const name = document.getElementById('admin-new-room-name').value.trim();
+    if(!name) return alert("채팅방 이름을 입력하세요.");
+    const code = adminRoomType === 'private' ? document.getElementById('admin-new-room-code').value.trim() : null;
+    if(adminRoomType === 'private' && !code) return alert("참여 코드를 입력하세요.");
+
+    const roomData = { name, type: adminRoomType, createdBy: 'ADMIN', createdAt: Date.now() };
+    if(code) roomData.code = code;
+
+    await fetch(`${DB}rooms.json`, { method:'POST', body: JSON.stringify(roomData) });
+    document.getElementById('admin-new-room-name').value = '';
+    document.getElementById('admin-new-room-code').value = '';
+    alert("채팅방 생성 완료!");
+    loadAdminAllRoomsDelete();
+}
+
+/* ==================== 프라이빗 입장 ==================== */
+async function checkPrivateCode() {
+    const c = document.getElementById('join-code-in').value; if(!c) return;
+    const res = await fetch(`${DB}rooms.json`); const d = await res.json();
+    let found = false;
+    if(d) Object.keys(d).forEach(id => {
+        if(d[id].type === 'private' && d[id].code === c) {
+            const roomObj = { id, name: "🔐 " + d[id].name };
+            if(!joinedRooms.some(r => r.id === id)) joinedRooms.push(roomObj);
+            saveJoinedRooms(); enterRoom(id, roomObj.name); found = true;
+        }
+    });
+    if(!found) alert("잘못된 코드이거나 방이 없습니다.");
+    document.getElementById('join-code-in').value = "";
+}
+
+function saveJoinedRooms() { localStorage.setItem(`joined_${me.id}`, JSON.stringify(joinedRooms)); loadJoinedList(); }
+function loadJoinedList() {
+    const box = document.getElementById('joined-rooms');
+    if(joinedRooms.length === 0) { box.innerHTML = '<p style="font-size:0.75rem; color:var(--text-dim); margin:5px;">없음</p>'; return; }
+    box.innerHTML = joinedRooms.map(r => `<div class="room-item active-room" onclick="enterRoom('${r.id}','${r.name}')"><span>${r.name}</span><button style="width:40px; padding:4px; background:#444;" onclick="event.stopPropagation(); removeJoined('${r.id}')">X</button></div>`).join('');
+}
+function removeJoined(id) { joinedRooms = joinedRooms.filter(r => r.id !== id); saveJoinedRooms(); }
+
+async function loadRooms() {
+    const res = await fetch(`${DB}rooms.json`); const d = await res.json();
+    const box = document.getElementById('room-container'); box.innerHTML = "";
+    if(d) {
+        Object.keys(d).forEach(id => {
+            if(d[id].type !== 'private') {
+                box.innerHTML += `<div class="room-item" onclick="enterRoom('${id}','${d[id].name}')">
+                    <span># ${d[id].name}</span>
+                    <span class="badge badge-open">오픈</span>
+                </div>`;
+            }
+        });
+    }
+    if(!box.innerHTML) box.innerHTML = '<p style="font-size:0.75rem; color:var(--text-dim); margin:5px;">공개 채팅방 없음</p>';
+    loadJoinedList();
+}
+
+function enterRoom(id, name) {
+    curRoom = id; isAI = (id === "AI_BOT");
+    document.getElementById('chat-list-view').style.display = 'none';
+    document.getElementById('chat-room-view').style.display = 'block';
+    document.getElementById('active-room-name').innerText = name;
+    loadMsg(); if(!isAI) chatInt = setInterval(loadMsg, 3000);
+}
+function exitRoom() { clearInterval(chatInt); document.getElementById('chat-list-view').style.display = 'block'; document.getElementById('chat-room-view').style.display = 'none'; curRoom = null; }
+
+async function sendMsg() {
+    const i = document.getElementById('chat-in'), f = document.getElementById('chat-img');
+    let img = ""; if(f.files[0]) { const r = new FileReader(); r.readAsDataURL(f.files[0]); await new Promise(res => r.onload = res); img = r.result; }
+    const txt = i.value; if(!txt && !img) return;
+    i.value = ""; f.value = "";
+    if(isAI) {
+        saveAIChat('user', txt, img); loadMsg();
+        let parts = []; if(txt) parts.push({text: txt}); if(img) parts.push({inline_data:{mime_type:"image/png", data:img.split(',')[1]}});
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AI_KEY}`, { method:'POST', body: JSON.stringify({contents:[{parts}]}) });
+        const data = await res.json(); saveAIChat('ai', data.candidates[0].content.parts[0].text); loadMsg();
+    } else {
+        await fetch(`${DB}messages/${curRoom}.json`, { method:'POST', body: JSON.stringify({user:me.id, msg:txt, img, t:Date.now()}) });
+        loadMsg();
+    }
+}
+
+async function loadMsg() {
+    const box = document.getElementById('chat-messages');
+    if(isAI) {
+        const h = JSON.parse(localStorage.getItem(`ai_chat_${me.id}`) || "[]");
+        box.innerHTML = h.map(m => `<div class="msg ${m.role==='user'?'me':'other'}"><div class="msg-user">${m.role==='user'?me.id:'🤖 AI'}</div>${m.text||""}${m.img?`<br><img src="${m.img}" style="width:100%; border-radius:10px; margin-top:5px;">`:''}</div>`).join('');
+    } else {
+        const res = await fetch(`${DB}messages/${curRoom}.json`); const d = await res.json(); box.innerHTML = "";
+        if(d) Object.entries(d).forEach(([key, m]) => {
+            const isAdmin = me.id === "ADMIN";
+            box.innerHTML += `<div class="msg ${m.user===me.id?'me':'other'}" id="msg-${key}">
+                <div class="msg-user">${m.user}</div>${m.msg||""}
+                ${m.img?`<br><img src="${m.img}" style="width:100%; border-radius:10px; margin-top:5px;">`:''}
+                ${isAdmin?`<br><small onclick="deleteMsg('${key}')" style="color:var(--danger); cursor:pointer; font-size:0.65rem;">🗑️ 삭제</small>`:''}
+            </div>`;
+        });
+    }
+    box.scrollTop = box.scrollHeight;
+}
+
+async function deleteMsg(key) {
+    if(!confirm("이 메시지를 삭제하시겠습니까?")) return;
+    await fetch(`${DB}messages/${curRoom}/${key}.json`, { method:'DELETE' });
+    loadMsg();
+}
+
+/* ==================== 비밀번호 변경 ==================== */
+async function changePassword() {
+    const cur = document.getElementById('cur-pw-in').value;
+    const nw = document.getElementById('new-pw-in').value;
+    const confirm2 = document.getElementById('new-pw-confirm').value;
+    if(!cur || !nw || !confirm2) return alert("모든 항목을 입력하세요.");
+    if(cur !== me.pw) return alert("현재 비밀번호가 일치하지 않습니다.");
+    if(nw !== confirm2) return alert("새 비밀번호가 일치하지 않습니다.");
+    if(nw.length < 4) return alert("비밀번호는 4자 이상이어야 합니다.");
+    await fetch(`${DB}accounts/${me.id}/pw.json`, { method:'PUT', body: JSON.stringify(nw) });
+    me.pw = nw;
+    alert("비밀번호가 변경되었습니다!");
+    document.getElementById('cur-pw-in').value = '';
+    document.getElementById('new-pw-in').value = '';
+    document.getElementById('new-pw-confirm').value = '';
+    closePopup('change-pw-popup');
+}
+
+/* ==================== 내 페이지 ==================== */
+async function loadMyPage() {
+    const res = await fetch(`${DB}accounts/${me.id}.json`);
+    const acc = await res.json();
+    const postsRes = await fetch(`${DB}posts.json`);
+    const postsData = await postsRes.json();
+    let myPostCount = 0, myPosts = [];
+    if(postsData) {
+        Object.entries(postsData).forEach(([key, p]) => {
+            if(p.author === me.id) { myPostCount++; myPosts.push({key, ...p}); }
+        });
+    }
+    document.getElementById('mypage-content').innerHTML = `
+        <div class="profile-avatar">${me.id.charAt(0).toUpperCase()}</div>
+        <div style="text-align:center; font-size:1.1rem; font-weight:bold;">${me.id}${me.id==='ADMIN'?' 👑':''}</div>
+        <div style="text-align:center; font-size:0.8rem; color:var(--text-dim); margin-top:5px;">${acc?.bio || "소개 없음"}</div>
+        <div class="stat-row">
+            <div><b>${myPostCount}</b>게시물</div>
+        </div>
+        <textarea id="bio-edit" placeholder="자기소개 입력..." style="margin-top:10px;" rows="2">${acc?.bio||""}</textarea>
+        <button onclick="saveBio()" style="font-size:0.8rem; margin-bottom:8px;">소개 저장</button>
+        <button onclick="openPopup('change-pw-popup')" style="background:#333; border:1px solid var(--accent); color:var(--accent); font-size:0.8rem;">🔑 비밀번호 변경</button>
+    `;
+    const myPostsBox = document.getElementById('my-posts');
+    if(myPosts.length === 0) { myPostsBox.innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">게시물 없음</p>'; return; }
+    myPostsBox.innerHTML = myPosts.reverse().map(p => `
+        <div class="feed-post">
+            <div style="font-size:0.85rem; line-height:1.5;">${p.content}</div>
+            ${p.img?`<img src="${p.img}" style="width:100%; border-radius:10px; margin-top:8px;">`:''}
+            <small style="color:var(--text-dim);">${new Date(p.t).toLocaleString()}</small>
+            <button onclick="deleteMyPost('${p.key}')" style="background:var(--danger); font-size:0.7rem; padding:5px; margin-top:8px;">삭제</button>
+        </div>
+    `).join('');
+}
+
+async function saveBio() {
+    const bio = document.getElementById('bio-edit').value;
+    await fetch(`${DB}accounts/${me.id}/bio.json`, { method:'PUT', body: JSON.stringify(bio) });
+    alert("소개 저장됨!");
+}
+
+async function deleteMyPost(key) {
+    if(!confirm("게시물을 삭제하시겠습니까?")) return;
+    await fetch(`${DB}posts/${key}.json`, { method:'DELETE' });
+    loadMyPage();
+}
+
+/* ==================== 피드 ==================== */
+async function postBlog() {
+    const c = document.getElementById('blog-in').value, f = document.getElementById('blog-img');
+    if(!c) return;
+    let img = ""; if(f.files[0]) { const r = new FileReader(); r.readAsDataURL(f.files[0]); await new Promise(res => r.onload = res); img = r.result; }
+    await fetch(`${DB}posts.json`, { method:'POST', body: JSON.stringify({content:c, img, author:me.id, t:Date.now(), likes:{}, comments:{}}) });
+    document.getElementById('blog-in').value = ""; f.value = ""; loadBlog();
+}
+
+async function loadBlog() {
+    const res = await fetch(`${DB}posts.json`); const d = await res.json();
+    const box = document.getElementById('blog-feed'); box.innerHTML = "";
+    if(!d) return;
+    const entries = Object.entries(d).reverse();
+    for(let [key, p] of entries) {
+        const likes = p.likes ? Object.keys(p.likes).length : 0;
+        const iLiked = p.likes && p.likes[me.id];
+        const comments = p.comments ? Object.entries(p.comments) : [];
+        const isAdmin = me.id === "ADMIN";
+        const isAuthor = p.author === me.id;
+        box.innerHTML += `
+        <div class="feed-post">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <b style="font-size:0.8rem; color:var(--accent);">@${p.author}</b>
+                <small style="color:var(--text-dim);">${new Date(p.t).toLocaleString()}</small>
+            </div>
+            <div style="font-size:0.9rem; line-height:1.5;">${p.content}</div>
+            ${p.img?`<img src="${p.img}" style="width:100%; border-radius:10px; margin-top:8px;">`:''}
+            <div class="feed-actions">
+                <button class="like-btn ${iLiked?'liked':''}" onclick="toggleLike('${key}','${iLiked?'1':'0'}')">❤️ ${likes}</button>
+                <button onclick="toggleComment('${key}')" style="background:#333; font-size:0.7rem;">💬 댓글</button>
+                ${isAdmin||isAuthor?`<button onclick="adminDeletePost('${key}')" style="background:var(--danger); font-size:0.7rem;">🗑️ 삭제</button>`:''}
+            </div>
+            <div id="cmts-${key}" style="display:none; margin-top:8px;">
+                ${comments.map(([ckey,c])=>`
+                <div class="comment-box" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><b style="color:var(--accent);">@${c.user}</b> ${c.text}</span>
+                    ${isAdmin?`<small onclick="deleteComment('${key}','${ckey}')" style="color:var(--danger); cursor:pointer;">X</small>`:''}
+                </div>`).join('')}
+                <div style="display:flex; gap:5px; margin-top:8px;">
+                    <input type="text" id="cmt-in-${key}" placeholder="댓글 입력..." style="margin:0; font-size:0.8rem;">
+                    <button onclick="addComment('${key}')" style="width:50px; font-size:0.7rem;">등록</button>
+                </div>
+            </div>
+        </div>`;
+    }
+}
+
+async function toggleLike(postKey, isLiked) {
+    if(isLiked === '1') {
+        await fetch(`${DB}posts/${postKey}/likes/${me.id}.json`, { method:'DELETE' });
+    } else {
+        await fetch(`${DB}posts/${postKey}/likes/${me.id}.json`, { method:'PUT', body: JSON.stringify(true) });
+    }
+    loadBlog();
+}
+
+function toggleComment(key) {
+    const box = document.getElementById(`cmts-${key}`);
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addComment(postKey) {
+    const input = document.getElementById(`cmt-in-${postKey}`);
+    const txt = input.value.trim(); if(!txt) return;
+    await fetch(`${DB}posts/${postKey}/comments.json`, { method:'POST', body: JSON.stringify({user:me.id, text:txt, t:Date.now()}) });
+    input.value = ""; loadBlog();
+}
+
+async function deleteComment(postKey, commentKey) {
+    if(!confirm("댓글을 삭제하시겠습니까?")) return;
+    await fetch(`${DB}posts/${postKey}/comments/${commentKey}.json`, { method:'DELETE' });
+    loadBlog();
+}
+
+async function adminDeletePost(key) {
+    if(!confirm("게시물을 삭제하시겠습니까?")) return;
+    await fetch(`${DB}posts/${key}.json`, { method:'DELETE' });
+    loadBlog();
+}
+
+/* ==================== ADMIN 패널 ==================== */
+async function loadAdminData() {
+    if(me.id !== "ADMIN") return;
+
+    // 통계
+    const [uRes, pRes, rRes] = await Promise.all([
+        fetch(`${DB}accounts.json`), fetch(`${DB}posts.json`), fetch(`${DB}rooms.json`)
+    ]);
+    const [uData, pData, rData] = await Promise.all([uRes.json(), pRes.json(), rRes.json()]);
+
+    const uCount = uData ? Object.keys(uData).length : 0;
+    const pCount = pData ? Object.keys(pData).length : 0;
+    const rCount = rData ? Object.keys(rData).length : 0;
+    document.getElementById('stat-users').innerText = uCount;
+    document.getElementById('stat-posts').innerText = pCount;
+    document.getElementById('stat-rooms').innerText = rCount;
+
+    // 사용자
+    allAdminUsersData = uData || {};
+    renderAdminUsers(allAdminUsersData);
+
+    // 피드
+    const pBox = document.getElementById('admin-posts'); pBox.innerHTML = "";
+    if(pData) {
+        Object.entries(pData).reverse().forEach(([key, p]) => {
+            pBox.innerHTML += `<div class="room-item">
+                <span style="font-size:0.75rem; flex:1;">${p.content.slice(0,30)}... <small style="color:var(--text-dim);">by ${p.author}</small></span>
+                <button onclick="adminDeletePost('${key}')" style="width:50px; font-size:0.65rem; padding:5px; background:var(--danger);">삭제</button>
+            </div>`;
+        });
+    }
+    if(!pBox.innerHTML) pBox.innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">게시물 없음</p>';
+
+    // 채팅방
+    const rBox = document.getElementById('admin-rooms'); rBox.innerHTML = "";
+    if(rData) {
+        for(let [rid, rinfo] of Object.entries(rData)) {
+            const msgRes = await fetch(`${DB}messages/${rid}.json`); const msgData = await msgRes.json();
+            const msgCount = msgData ? Object.keys(msgData).length : 0;
+            rBox.innerHTML += `<div class="room-item">
+                <div style="flex:1;">
+                    <div style="font-size:0.8rem;">${rinfo.type==='private'?'🔐':'#'} ${rinfo.name} <span class="badge badge-${rinfo.type==='private'?'private':'open'}">${rinfo.type==='private'?'프라이빗':'오픈'}</span></div>
+                    <div style="font-size:0.65rem; color:var(--text-dim);">메시지 ${msgCount}개 ${rinfo.code?'| 코드: '+rinfo.code:''}</div>
+                </div>
+                <div style="display:flex; gap:5px; flex-shrink:0;">
+                    <button onclick="adminViewRoom('${rid}','${rinfo.name}')" style="width:45px; font-size:0.65rem; padding:4px;">입장</button>
+                    <button onclick="adminClearRoom('${rid}')" style="width:55px; font-size:0.65rem; padding:4px; background:#555;">초기화</button>
+                    <button onclick="adminDeleteRoom('${rid}')" style="width:45px; font-size:0.65rem; padding:4px; background:var(--danger);">삭제</button>
+                </div>
+            </div>`;
+        }
+    }
+    if(!rBox.innerHTML) rBox.innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">채팅방 없음</p>';
+}
+
+function renderAdminUsers(uData) {
+    const uBox = document.getElementById('admin-users'); uBox.innerHTML = "";
+    if(uData && Object.keys(uData).length > 0) {
+        Object.entries(uData).forEach(([uid, uinfo]) => {
+            uBox.innerHTML += `<div class="room-item">
+                <div style="flex:1;">
+                    <span>👤 ${uid}</span>
+                    ${uid === 'ADMIN' ? '<span class="badge" style="background:var(--stock); color:black;">ADMIN</span>' : ''}
+                    <div style="font-size:0.65rem; color:var(--text-dim); margin-top:2px;">${uinfo.bio || '소개 없음'}</div>
+                </div>
+                <div style="display:flex; gap:5px; flex-shrink:0;">
+                    <button onclick="openEditUser('${uid}')" style="width:45px; font-size:0.65rem; padding:4px;">수정</button>
+                    <button onclick="adminDeleteUser('${uid}')" style="width:45px; font-size:0.65rem; padding:4px; background:var(--danger);">삭제</button>
+                </div>
+            </div>`;
+        });
+    } else {
+        uBox.innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">사용자 없음</p>';
+    }
+}
+
+function filterAdminUsers() {
+    const q = document.getElementById('admin-search-user').value.toLowerCase();
+    const filtered = {};
+    Object.entries(allAdminUsersData).forEach(([uid, info]) => {
+        if(uid.toLowerCase().includes(q)) filtered[uid] = info;
+    });
+    renderAdminUsers(filtered);
+}
+
+async function loadBroadcastRooms() {
+    const res = await fetch(`${DB}rooms.json`); const d = await res.json();
+    const sel = document.getElementById('broadcast-room');
+    sel.innerHTML = '';
+    if(d) Object.entries(d).forEach(([id, r]) => {
+        sel.innerHTML += `<option value="${id}">${r.type==='private'?'🔐':'#'} ${r.name}</option>`;
+    });
+}
+
+async function sendBroadcast() {
+    const rid = document.getElementById('broadcast-room').value;
+    const msg = document.getElementById('broadcast-msg').value.trim();
+    if(!rid || !msg) return alert("채팅방과 공지 내용을 입력하세요.");
+    if(!confirm(`선택한 채팅방에 공지를 발송하시겠습니까?\n\n"${msg}"`)) return;
+    await fetch(`${DB}messages/${rid}.json`, { method:'POST', body: JSON.stringify({user:'📢 ADMIN', msg:`[공지] ${msg}`, img:'', t:Date.now()}) });
+    document.getElementById('broadcast-msg').value = '';
+    alert("공지 발송 완료!");
+}
+
+async function loadAdminAllRoomsDelete() {
+    const res = await fetch(`${DB}rooms.json`); const d = await res.json();
+    const box = document.getElementById('admin-all-rooms-delete'); box.innerHTML = "";
+    if(d) {
+        Object.entries(d).forEach(([id, r]) => {
+            box.innerHTML += `<div class="room-item">
+                <span style="font-size:0.8rem;">${r.type==='private'?'🔐':'#'} ${r.name}</span>
+                <button onclick="adminDeleteRoom('${id}')" style="width:45px; font-size:0.65rem; padding:4px; background:var(--danger);">삭제</button>
+            </div>`;
+        });
+    }
+    if(!box.innerHTML) box.innerHTML = '<p style="color:var(--text-dim); font-size:0.8rem;">방 없음</p>';
+}
+
+function openEditUser(uid) {
+    document.getElementById('edit-user-id').value = uid;
+    document.getElementById('edit-user-pw').value = "";
+    document.getElementById('edit-user-bio').value = "";
+    openPopup('edit-user-popup');
+}
+
+async function saveEditUser() {
+    const uid = document.getElementById('edit-user-id').value;
+    const pw = document.getElementById('edit-user-pw').value;
+    const bio = document.getElementById('edit-user-bio').value;
+    const updates = {};
+    if(pw) updates.pw = pw;
+    if(bio) updates.bio = bio;
+    for(let [k,v] of Object.entries(updates)) {
+        await fetch(`${DB}accounts/${uid}/${k}.json`, { method:'PUT', body: JSON.stringify(v) });
+    }
+    alert("수정 완료!"); closePopup('edit-user-popup'); loadAdminData();
+}
+
+async function adminDeleteUser(uid) {
+    if(uid === "ADMIN") return alert("ADMIN 계정은 삭제 불가!");
+    if(!confirm(`${uid} 계정을 삭제하시겠습니까?`)) return;
+    await fetch(`${DB}accounts/${uid}.json`, { method:'DELETE' });
+    loadAdminData();
+}
+
+function adminViewRoom(rid, name) {
+    tab('chat', document.querySelectorAll('.nav-item')[2]);
+    setTimeout(() => enterRoom(rid, name), 300);
+}
+
+async function adminClearRoom(rid) {
+    if(!confirm("이 채팅방의 모든 메시지를 삭제하시겠습니까?")) return;
+    await fetch(`${DB}messages/${rid}.json`, { method:'DELETE' });
+    alert("채팅방 초기화 완료!"); loadAdminData();
+}
+
+async function adminDeleteRoom(rid) {
+    if(!confirm("채팅방을 완전히 삭제하시겠습니까?\n(메시지도 모두 삭제됩니다)")) return;
+    await Promise.all([
+        fetch(`${DB}rooms/${rid}.json`, { method:'DELETE' }),
+        fetch(`${DB}messages/${rid}.json`, { method:'DELETE' })
+    ]);
+    alert("채팅방 삭제 완료!"); loadAdminData(); loadAdminAllRoomsDelete();
+}
+
+/* ==================== 팝업 ==================== */
+function openPopup(id) {
+    closeAllPopups();
+    document.getElementById(id).style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+}
+function closePopup(id) {
+    document.getElementById(id).style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+}
+function closeAllPopups() {
+    document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
+    document.getElementById('overlay').style.display = 'none';
+}
+
+/* ==================== 스톱워치 ==================== */
+let swTime = 0, swInt;
+function startSW() { if(!swInt) swInt = setInterval(() => { swTime += 10; updateSWDisp(); }, 10); }
+function stopSW() { clearInterval(swInt); swInt = null; }
+function resetSW() { stopSW(); swTime = 0; updateSWDisp(); }
+function updateSWDisp() {
+    let ms = Math.floor((swTime%1000)/10), s = Math.floor((swTime/1000)%60), m = Math.floor(swTime/60000);
+    document.getElementById('sw-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+}
+
+/* ==================== 타이머 ==================== */
+let tTime = 0, tInt;
+function startTimer() {
+    if(tInt) return;
+    tTime = parseInt(document.getElementById('timer-in').value) || 0;
+    if(tTime <= 0) return;
+    tInt = setInterval(() => {
+        tTime--; updateTimerDisp();
+        if(tTime <= 0) { clearInterval(tInt); tInt = null; alert("타이머 종료!"); }
+    }, 1000);
+}
+function resetTimer() { clearInterval(tInt); tInt = null; tTime = 0; updateTimerDisp(); }
+function updateTimerDisp() {
+    let s = tTime % 60, m = Math.floor(tTime / 60);
+    document.getElementById('timer-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+/* ==================== 기타 유틸 ==================== */
+function saveAIChat(role, text, img=null) {
+    const h = JSON.parse(localStorage.getItem(`ai_chat_${me.id}`) || "[]");
+    h.push({role,text,img}); localStorage.setItem(`ai_chat_${me.id}`, JSON.stringify(h.slice(-20)));
+}
+function enterAI() { tab('chat', document.querySelectorAll('.nav-item')[2]); setTimeout(() => enterRoom("AI_BOT","🤖 AI Assistant"), 100); }
+function cIn(v) { let r = document.getElementById('calc-res'); r.innerText = r.innerText === '0' ? v : r.innerText + v; }
+function cClr() { document.getElementById('calc-res').innerText = '0'; }
+function cCalc() { try { document.getElementById('calc-res').innerText = eval(document.getElementById('calc-res').innerText); } catch { alert('에러'); } }
+function saveDDay() { localStorage.setItem(`dday_${me.id}`, document.getElementById('dday-in').value); updateDDay(); }
+function updateDDay() {
+    const s = localStorage.getItem(`dday_${me.id}`); if(!s) return;
+    const d = Math.ceil((new Date(s) - new Date()) / (1000*60*60*24));
+    document.getElementById('dday-view').innerText = d > 0 ? `D-${d}` : d === 0 ? "D-Day!" : `D+${Math.abs(d)}`;
+}
+function addTodo() {
+    const i = document.getElementById('todo-in'); if(!i.value) return;
+    const list = JSON.parse(localStorage.getItem(`todo_${me.id}`) || "[]");
+    list.push(i.value); localStorage.setItem(`todo_${me.id}`, JSON.stringify(list));
+    i.value = ""; loadTodo();
+}
+function loadTodo() {
+    const list = JSON.parse(localStorage.getItem(`todo_${me.id}`) || "[]");
+    document.getElementById('todo-box').innerHTML = list.map((t,i) => `<div style="margin-bottom:5px;">• ${t} <span onclick="delTodo(${i})" style="color:red; float:right; cursor:pointer;">X</span></div>`).join('');
+}
+function delTodo(i) {
+    const list = JSON.parse(localStorage.getItem(`todo_${me.id}`) || "[]");
+    list.splice(i, 1); localStorage.setItem(`todo_${me.id}`, JSON.stringify(list)); loadTodo();
+}
+function saveMemo() { localStorage.setItem(`memo_${me.id}`, document.getElementById('memo-in').value); }
+
+function init() {
+    joinedRooms = JSON.parse(localStorage.getItem(`joined_${me.id}`) || "[]");
+    updateExtraInfo(); loadTodo(); updateDDay(); newQuote();
+    document.getElementById('memo-in').value = localStorage.getItem(`memo_${me.id}`) || "";
+    setInterval(() => document.getElementById('header-time').innerText = new Date().toLocaleTimeString(), 1000);
+}
+</script>
+</body>
+</html>
